@@ -27,6 +27,8 @@ namespace LegoDOTS
             else
             {
                 position = new Vector2(playerPosition.position.x, playerPosition.position.z);
+
+                //this is to have a nice lerp effect when player fall down from the bridge
                 elevateMax = math.clamp(playerPosition.position.y - 6f, minY, maxY);
             }
 
