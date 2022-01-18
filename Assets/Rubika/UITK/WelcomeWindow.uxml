@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Rubika/UITK/WelcomeWindow.uss?fileID=7433441132597879392&amp;guid=4cee61096b52fea46a82190710eef28e&amp;type=3#WelcomeWindow" />
+    <ui:VisualElement style="flex-direction: row;">
+        <ui:VisualElement style="flex-direction: row; height: 102px; width: 101px; background-image: url(&apos;project://database/Assets/StarterAssets/TutorialInfo/Icons/ReadMeImg.PNG?fileID=2800000&amp;guid=44a17a5b205fcd349a24700e6f5615bd&amp;type=3#ReadMeImg&apos;);" />
+        <ui:Label text="WELCOME" display-tooltip-when-elided="true" style="-unity-font: url(&apos;project://database/Library/unity%20default%20resources?fileID=10102&amp;guid=0000000000000000e000000000000000&amp;type=0#Arial&apos;); font-size: 30px; width: 251px; -unity-text-align: middle-center;" />
+    </ui:VisualElement>
+    <ui:Button text="Send To Log" display-tooltip-when-elided="true" name="SendToLog" />
+    <ui:Toggle label="Switch" value="true" name="Switch" />
+    <ui:TextField picking-mode="Ignore" label="Sentence" value="filler text" text="My awesome sentence" name="Sentence" />
+</ui:UXML>

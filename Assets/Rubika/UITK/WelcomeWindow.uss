@@ -1,0 +1,5 @@
+.unity-label {
+    -unity-font-style: bold;
+    -unity-text-align: upper-right;
+    color: rgba(212, 151, 44, 255);
+}
