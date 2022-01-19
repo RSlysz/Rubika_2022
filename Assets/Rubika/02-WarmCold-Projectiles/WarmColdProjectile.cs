@@ -14,7 +14,7 @@ public class WarmColdProjectile : MonoBehaviour
     public Color colorValue = Color.black;
 
     Material material;
-    HDAdditionalLightData light;
+    new HDAdditionalLightData light;
 
     // Start is called before the first frame update
     void Start()
