@@ -1,0 +1,119 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSPoints
+#pragma kernel CSSticks
+#pragma kernel CSSanitize
+#pragma kernel CSCalculateNormals
+
+#include "./ClothInclude.hlsl"
+
+struct Stick
+{
+    int pointA, pointB;
+    float length;
+};
+
+struct ForceField
+{
+    float3 position;
+    float size;
+    float intensity;
+};
+
+float dampening, gravity;
+
+RWStructuredBuffer<Point> points;
+StructuredBuffer<Stick> sticks;
+StructuredBuffer<ForceField> forces;
+uint forcesCount;
+
+RWStructuredBuffer<float3> pointsTempPositions;
+StructuredBuffer<int> sticksPointsMapping;
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+
+[numthreads(64,1,1)]
+void CSPoints (uint3 id : SV_DispatchThreadID)
+{
+    Point p = points[id.x];
+    if (p.locked!=1)
+    {
+        float3 positionBefore = p.position;
+        p.position += ( p.position - p.prevPosition ) *(1- dampening);
+        p.position.y -= gravity;
+        p.prevPosition = positionBefore;
+
+        for (uint i=0 ; i<forcesCount ; i++)
+        {
+            if (forces[i].intensity > 0)
+            {
+                float3 offset = p.position - forces[i].position;
+                float influence = length(offset) / forces[i].size;
+                influence = saturate(1-influence);
+                influence *= influence;
+                p.position += normalize(offset) * influence * forces[i].intensity;
+            }
+        }
+
+        points[id.x] = p;
+    }
+}
+
+[numthreads(64,1,1)]
+void CSSticks (uint3 id : SV_DispatchThreadID)
+{
+    Stick s = sticks[id.x];
+
+    float3 center = (points[s.pointA].position + points[s.pointB].position) / 2;
+    float3 dir = normalize(points[s.pointA].position - points[s.pointB].position);
+
+    if (points[s.pointA].locked==1 && points[s.pointB].locked==1)
+    {}
+    else if ( points[s.pointA].locked==1 )
+        center = points[s.pointA].position + dir * s.length / 2;
+    else if ( points[s.pointB].locked==1 )
+        center = points[s.pointB].position - dir * s.length / 2;
+
+    if (points[s.pointA].locked!=1)
+        pointsTempPositions[sticksPointsMapping[id.x*2]] = center + dir * s.length / 2;
+    if (points[s.pointB].locked!=1)
+        pointsTempPositions[sticksPointsMapping[id.x*2+1]] = center - dir * s.length / 2;
+}
+
+[numthreads(64,1,1)]
+void CSSanitize (uint3 id : SV_DispatchThreadID)
+{
+    if (points[id.x].locked!=1)
+    {
+        float3 targetPos = (
+            pointsTempPositions[id.x*4  ]+
+            pointsTempPositions[id.x*4+1]+
+            pointsTempPositions[id.x*4+2]+
+            pointsTempPositions[id.x*4+3]
+            )/points[id.x].connectionsCounts;
+
+        float3 offset = targetPos - points[id.x].position;
+        if (offset.y < 0) offset.y /= points[id.x].connectionsCounts;
+        
+        points[id.x].position += offset;
+    }
+}
+
+[numthreads(64,1,1)]
+void CSCalculateNormals (uint3 id : SV_DispatchThreadID)
+{
+    Point p = points[id.x];
+    
+    float3 right = (p.neighborRight != -1)? points[p.neighborRight].position : p.position;
+    float3 left  = (p.neighborLeft  != -1)? points[p.neighborLeft ].position : p.position;
+    float3 up    = (p.neighborUp    != -1)? points[p.neighborUp   ].position : p.position;
+    float3 down  = (p.neighborDown  != -1)? points[p.neighborDown ].position : p.position;
+
+    float3 dX = normalize(right-left);
+    float3 dY = normalize(up-down);
+
+    p.normal = -normalize( cross(dX, dY) );
+
+    points[id.x] = p;
+}
