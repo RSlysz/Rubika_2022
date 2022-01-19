@@ -35,7 +35,7 @@ public class WelcomeWindow : EditorWindow
         var button = root.Q<Button>("SendToLog");
         @switch = root.Q<Toggle>("Switch");
         sentence = root.Q<TextField>("Sentence");
-        
+
         // Event handling
         button.clicked += SendToLog;
 
